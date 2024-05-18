@@ -12,6 +12,7 @@ def init_page():
         page_icon="🐷"
     )
     st.header("AI採用コンサル🐷")
+    st.write('このサービスはリクナビに載っている企業の募集要項URLを入力すると、その企業にあった人材の特性をAIがアドバイスします。')
 
 
 def init_messages():
@@ -27,18 +28,19 @@ def get_content(url):
             # スクレイピングでURL先の情報取得
             response = requests.get(url)
             soup = BeautifulSoup(response.text, 'html.parser')
-            # <main>の中の"テキストデータ"を取得
-            return soup.main.get_text()
+            # セレクタで指定の要素を取得(リクナビ企業募集要項に特化)
+            element = soup.select("body > div.ts-p-l-root > div.ts-p-l-body > div.ts-p-company-individualArea")
+            return element[0].get_text()
     except:
-        st.write('スクレイピングエラー発生')
+        st.write('このサービスはリクナビに特化しているので、URLを改めてください')
         return None
 
 
 # より要望に沿う結果を得るために適切なプロンプトを作成する
-def build_prompt(content, n_chars=300):
-    return f"""以下はとある企業の採用ページである。事業内容と会社の魅力からその企業が採用すべき人材のスキルと価値観を{n_chars}字程度の日本語で答えてください。
+def build_prompt(content, n_chars=240):
+    return f"""以下はある企業の採用ページである。その企業の事業内容と魅力から、その企業が採用すべき人材のスキルと価値観を{n_chars}字程度の日本語で答えてください。
 ========
-{content[:1000]}
+{content[:700]}
 ========
 """
 
@@ -50,7 +52,7 @@ def main():
     answer = None
 
     # 入力フォームからURLを取得
-    if url := st.text_input("URL: ", key="input"):
+    if url := st.text_input("リクナビURL: ", key="input"):
         content = get_content(url)
         if content:
             prompt = build_prompt(content)
@@ -62,11 +64,8 @@ def main():
             answer = None
 
     if answer:
-        st.markdown("## 要約")
+        st.markdown("## AIの答え")
         st.write(answer)
-        st.markdown("---")
-        st.markdown("## 原文")
-        st.write(content)
 
 
 if __name__ == '__main__':
