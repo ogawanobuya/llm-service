@@ -15,6 +15,7 @@ BeautifulSoupでリクナビから企業情報をスクレイピングしAIが�
 
 ## askDoc.py
 専門知識を持たない通常の生成AIに、PDFをアップロードし知識の外付けをすることで実現した専門家AI
+#### 技術的特徴
 - 一般的な専門家AIであるRetrievalQAの進化版ConversationalRetrievalChain(継続的な質問が可能)を実装
 - RecursiveCharacterTextSplitterでPDF文書を分割し管理することで、質問に回答するために最も参照すべき文書箇所を簡単に探せる
 - ベクトルDBを活用してより正確により高速に文書の参照を行う
