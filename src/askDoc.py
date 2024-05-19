@@ -3,10 +3,12 @@ from langchain.callbacks import get_openai_callback
 from langchain.chat_models import ChatOpenAI
 
 from PyPDF2 import PdfReader
+from langchain.schema import (SystemMessage, HumanMessage, AIMessage)
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Qdrant
-from langchain.chains import RetrievalQA
+# from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
@@ -21,6 +23,11 @@ def init_page():
         page_icon="🐉"
     )
     st.sidebar.title("メニュー")
+    clear_button = st.sidebar.button("Clear Conversation", key="clear")
+    # チャット履歴の初期化
+    if clear_button or "messages" not in st.session_state:
+        # ここで初めて「messages」キーを持つ
+        st.session_state.messages = []
 
 
 # 「PDF Upload」でPDFをテキストデータにする
@@ -92,8 +99,8 @@ def build_qa_model(llm):
         # 類似する上位何件のchunkを取り出すか？
         search_kwargs={"k": 3}
     )
-    # from_chain_typeは複数のチャンクの連結処理をする
-    return RetrievalQA.from_chain_type(
+    # from_llm(RetrievalQAのfrom_chain_type)は複数のチャンクの連結処理をする
+    return ConversationalRetrievalChain.from_llm(
         llm=llm,
         chain_type="stuff", 
         retriever=retriever,
@@ -115,22 +122,30 @@ def page_pdf_upload_and_build_vector_db():
 
 def page_ask_my_pdf():
     st.title("Ask PDF")
+    st.write("これはアップロードされたPDFを外部参照データとして持つより専門的になったAIです。")
+
     model_name = "gpt-3.5-turbo-0125"
     llm = ChatOpenAI(temperature=0, model_name=model_name)
-    answer = None
 
-    if query := st.text_input("質問: ", key="input"):
+    if query := st.chat_input("質問: ", key="input"):
+        st.session_state.messages.append(HumanMessage(content=query))
         qa = build_qa_model(llm)
         if qa:
             with st.spinner("ChatGPT is typing ..."):
-                answer = qa(query)
-                answer = answer["result"]
-        else:
-            answer = None
+                answer = qa({ "question": query, "chat_history": st.session_state.messages })
+                st.session_state.messages.append(AIMessage(content=answer["answer"]))
 
-    if answer:
-        st.markdown("## 回答")
-        st.write(answer)
+    # チャット履歴の表示
+    messages = st.session_state.get('messages', [])
+    for message in messages:
+        if isinstance(message, AIMessage):
+            with st.chat_message('assistant'):
+                st.markdown(message.content)
+        elif isinstance(message, HumanMessage):
+            with st.chat_message('user'):
+                st.markdown(message.content)
+        else:
+            st.write(f"Other type message: {message.content}")
 
 
 def main():
