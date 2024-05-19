@@ -7,7 +7,6 @@ from langchain.schema import (SystemMessage, HumanMessage, AIMessage)
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Qdrant
-# from langchain.chains import RetrievalQA
 from langchain.chains import ConversationalRetrievalChain
 
 from qdrant_client import QdrantClient
@@ -162,5 +161,5 @@ if __name__ == '__main__':
 
 # プログラムの流れ
 # PDF Upload: PDFアップロード→テキスト抽出しベクトル化→ベクトルデータをQdrantに保存
-# Ask PDF: 質問を入力→「質問をベクトル化する→Qdrantから質問ベクトルに近いchunkを抜き出す→chunkをベクトルからテキストに戻しRetrievalQAデフォルトプロンプトに挿入→llmモデルにプロンプトを流し回答を得る」→回答表示
-# 「」の部分は全てRetrievalQAが行う
+# Ask PDF: 質問を入力→「質問をベクトル化する→Qdrantから質問ベクトルに近いchunkを抜き出す→chunkをベクトルからテキストに戻しConversationalRetrievalChainデフォルトプロンプトに挿入→llmモデルにプロンプトを流し回答を得る」→回答表示
+# 「」の部分は全てConversationalRetrievalChainが行う
